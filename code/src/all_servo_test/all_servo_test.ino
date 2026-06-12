@@ -29,6 +29,11 @@ class ServoPair {
       servo.write(angle);
       delay(10);
     }
+    void SetAngle(int in_deg,int fin_deg){
+      angle = map(potValueGet(), 0, 1023, in_deg, fin_deg);
+      servo.write(angle);
+      delay(10);
+    }
 } servo_pair[5];
 
 class doubleServoPair: public ServoPair{
@@ -67,7 +72,7 @@ void setup() {
 }
 
 void loop() {
-  servo_pair[0].SetAngle();
+  servo_pair[0].SetAngle(0,100);
   double_servo_pair[0].SetAngle(double_servo_pair[0],double_servo_pair[1]);
   servo_pair[2].SetAngle();
   servo_pair[3].SetAngle();
