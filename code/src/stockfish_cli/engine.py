@@ -57,5 +57,7 @@ while True:
     print("Stockfish answer:", stockfish_move)
 
     board.push(chess.Move.from_uci(stockfish_move))
+    with open("code/src/stockfish_cli/answer.txt","w") as f:
+        f.write(stockfish_move)
 
 send("quit")
