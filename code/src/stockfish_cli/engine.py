@@ -1,6 +1,7 @@
 import subprocess
 import chess
 
+
 stockfish_path = "/usr/local/bin/stockfish"
 
 engine = subprocess.Popen(
@@ -30,18 +31,23 @@ def get_bestmove_from_current_position():
     bestmove_line = read_until("bestmove")
     return bestmove_line.split()[1]
 
+def clear_answer():
+    with open("code/src/stockfish_cli/answer.txt","w") as f:
+         f.write("")
+
 send("uci")
 read_until("uciok")
 
 send("isready")
 read_until("readyok")
 
-while True:
+clear_answer()
+try:
+ while True:
     user_move = input("Enter move: ")
 
-    if user_move == "quit":
-        break
-    if len(user_move)<4 | len(user_move)>5:
+    
+    if len(user_move)<4 or len(user_move)>5:
         print("The move must be 4 or 5 characters long. Please enter again a valid move..")
         continue
 
@@ -60,4 +66,7 @@ while True:
     with open("code/src/stockfish_cli/answer.txt","w") as f:
         f.write(stockfish_move)
 
-send("quit")
+except KeyboardInterrupt:
+    print("Shutting engine down...")
+    clear_answer()
+
