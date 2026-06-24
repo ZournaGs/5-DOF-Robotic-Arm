@@ -28,9 +28,10 @@ def main():
         serial_thread.join()
 
     except KeyboardInterrupt:
-        pass
+        engine_thread.join()
+        serial_thread.join()
 
-    print("Program closed.")
+    print("Main program closed.")
 
 
 if __name__ == "__main__":

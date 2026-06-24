@@ -18,14 +18,14 @@ try:
                 move = file.read().strip()
 
             if move != "" and move != last_move:
-                print(f"---------------\nSending to Arduino: {move}")
+                print(f"\n---------------\nSending to Arduino: {move}")
                 ser.write((move + "\n").encode())
                 last_move = move
 
         if ser.in_waiting > 0:
             arduino_msg = ser.readline().decode(errors="ignore").strip()
             if arduino_msg:
-                print(f"Arduino: {arduino_msg}\n---------------")
+                print(f"Arduino: {arduino_msg}\n---------------\n")
 
         time.sleep(0.1)
 
