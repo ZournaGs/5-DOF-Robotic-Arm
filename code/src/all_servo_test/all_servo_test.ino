@@ -72,7 +72,7 @@ void setup() {
 }
 
 void loop() {
-  servo_pair[0].SetAngle(0,100);
+  servo_pair[0].SetAngle();
   double_servo_pair[0].SetAngle(double_servo_pair[0],double_servo_pair[1]);
   servo_pair[2].SetAngle();
   servo_pair[3].SetAngle();
