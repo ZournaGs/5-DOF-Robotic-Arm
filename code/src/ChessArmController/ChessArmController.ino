@@ -1,12 +1,27 @@
 #include <Servo.h>
 #include <math.h>
-#define L1 7.7
-#define L2 7.7
-#define L3 10.5
-#define Y 0
 
+//Measured values
+#define L1 8
+#define L2 7.6
+#define L3 18.5//10.5 without gripper
+#define Y 5
+#define phi 0
+//End Measured values
+
+//Globals
 String move = "";
 Servo servoA,servoB1,servoB2,servoC,servoD,servoF;
+//End Globals
+
+enum ServoName {
+    SERVO_A,
+    SERVO_B1,
+    SERVO_B2,
+    SERVO_C,
+    SERVO_D,
+    SERVO_F
+};
 
 class InvKin {
 private:
@@ -26,12 +41,20 @@ public:
 
     void FindThetas(double x, double y) {
         double xp, yp, r, a, b, C2, S2;
-
-        xp = x + L3;
-        yp = y;
+        
+        /*Serial.println("Trig values:");
+        Serial.println(cos(deg2rad(phi)));
+        Serial.println(sin(deg2rad(phi)));
+        */
+        /* //Model1
+        xp = x-L3*cos(deg2rad(phi));
+        yp = y-L3*sin(deg2rad(phi));
 
         r = sqrt(xp*xp + yp*yp);
-        if(r>=abs(L3-(L1+L2)) && r<=(L1+L2+L3)){
+        if(r>=abs(L1-L2) && r<=(L1+L2)){
+          Serial.print("r=");
+          Serial.println(r);
+         
           a = atan2(yp, xp);
 
         C2 = (r*r - L1*L1 - L2*L2) / (2*L1*L2);
@@ -43,20 +66,46 @@ public:
 
         thetas[0] = rad2deg(a - b);
         thetas[1] = rad2deg(atan2(S2, C2));
-        thetas[2] = -90 - (thetas[0] + thetas[1]);
-        }else{
-          Serial.print("Arm(r) out of bounds!!!");
-          Serial.println(r);
+        thetas[2] = phi - (thetas[0] + thetas[1]);
+        */
+        //Model 2
+        C2=(x*x+y*y-L1*L1-L2*L2+L3*L3-2*L3*(x*cos(deg2rad(phi))+y*sin(deg2rad(phi))))/(2*L1*L2);
+        if((C2!=-1 || L1!=L2) && (C2>=-1 && C2<=1) ){
+          S2=sqrt(1-C2*C2);
+          thetas[1]=rad2deg(atan2(S2,C2));
+          thetas[0]=rad2deg(atan2(
+                    (y - L3*sin(deg2rad(phi))) * (L1 + L2*C2)
+                  - (x - L3*cos(deg2rad(phi))) * L2*S2,
 
+                    (x - L3*cos(deg2rad(phi))) * (L1 + L2*C2)
+                  + (y - L3*sin(deg2rad(phi))) * L2*S2
+                  ));
+          thetas[2]=phi-(thetas[0]+thetas[1]);
+          Serial.println("Theoritical thetas:");
+          PrintThetas();
+
+        //Converting theta's from theoretical model
+        thetas[0]=thetas[0]+38;//Servos B1,B2
+        thetas[1]=thetas[1]+72;//Servo C
+        thetas[2]=76-thetas[2]-180;// Servo D
+        Serial.println("Real thetas:");
+        PrintThetas();
+
+        }else{
+          Serial.print("Arm out of bounds!!!");
+          //Home position for not breaking the arm
+          thetas[0]=38;//Servos B1,B2
+          thetas[1]=72;//Servo C
+          thetas[2]=76;// Servo D
         }
         
     }
 
     double GetOmega(double x, double z){
       if(z>=0 && z<=9.1875){
-        return atan(z/x);
+        return rad2deg(atan(z/x))+90;//+90 offset from theoritical model
       }else if (z<0 && z>=-12.25){
-        return atan(z/x)+M_PI;
+        return rad2deg(atan(z/x)+M_PI)+90;//same
       }else{
         Serial.println("Arm(z) out of bounds!!!");
       }
@@ -65,42 +114,52 @@ public:
     double rad2deg(double rad) {
         return rad * 180.0 / M_PI;
   }
+    double deg2rad(double deg){
+      return deg * M_PI/180;
+    }
 
     void PrintThetas(){
       for(int i=0;i<3;i++){
     Serial.println(thetas[i]);
     }
-
   }
-};
+};//End InvKin
 
 //functions
-void HomeArm (){
-  servoA.write(90);
-  servoB1.write(38);
-  servoB2.write(180-38);
-  servoC.write(72);
-  servoD.write(76);
-  servoF.write(30);//open
+void RestArm (){
+  //servoA.write(90);
+  SetAngle(servoA,90,SERVO_A);
+  //servoB1.write(38);
+  SetAngle(servoB1,30,SERVO_B1);
+  //servoB2.write(180-38);
+  SetAngleSup(servoB2,30,SERVO_B2);
+  //servoC.write(72);
+  SetAngle(servoC,80,SERVO_C);
+  //servoD.write(76);
+  SetAngle(servoD,136,SERVO_D);
+  //servoF.write(60);//open
+  SetAngle(servoF,0,SERVO_F);
   //servoF.write(0);//close
 }
-void RestArm(){
-  HomeArm();
-  SetAngle(servoD,76+60,"servoD");
 
-}
 void GripOpen(){
-  servoF.write(30);//open
+  //servoF.write(60);//open
+  SetAngle(servoF,0,SERVO_F);
 }
 
 void GripClose(){
-  servoF.write(0);//close
+  //servoF.write(40);//close
+  SetAngle(servoF,160,SERVO_F);
 }
 
-void SetAngle(Servo servo,double theta,String name) {
+void SetAngle(Servo &servo,double theta,ServoName name) {
       if (theta>=0 && theta<=180){
-        servo.write(theta);
-        delay(100);
+        if(name==SERVO_B1 || name==SERVO_B2){
+          servo.write(theta);
+        }else{
+          servo.write(theta);
+          delay(100);
+        }
       }else{
         Serial.print("Servo ");
         Serial.print(name);
@@ -109,9 +168,17 @@ void SetAngle(Servo servo,double theta,String name) {
       
     }
 
-void SetAngleSup(Servo servo,double theta,String name) {
+void SetAngleSup(Servo &servo,double theta,ServoName name) {
       SetAngle(servo,180-theta,name);
     }
+
+void SetPosition(InvKin &invkin){
+  SetAngle(servoB1,invkin.GetTheta1(),SERVO_B1);
+  SetAngleSup(servoB2,invkin.GetTheta1(),SERVO_B2);
+  SetAngle(servoC,invkin.GetTheta2(),SERVO_C);
+  SetAngle(servoD,invkin.GetTheta3(),SERVO_D);
+}
+
 
 void SerialCom(){
   if (Serial.available()) {
@@ -122,6 +189,7 @@ void SerialCom(){
       Serial.println("Serial communication is unavailable!");
     }
 }
+//End functions
 
 
 
@@ -132,17 +200,15 @@ void setup() {
   servoB2.attach(5);
   servoC.attach(6);
   servoD.attach(7);
-  servoF.attach(8);
+  servoF.attach(9);
   RestArm();
   SerialCom();
-  /*
   InvKin invkin;
-  invkin.FindThetas(15,Y);
-  //invkin.PrintThetas();
-  Serial.println(invkin.GetTheta1());
-  Serial.println(invkin.GetTheta2());
-  Serial.println(invkin.GetTheta3());
-  */
+  invkin.FindThetas(15,15);
+  SetPosition(invkin);
+  delay(2000);
+  RestArm();
+  
 }
 
 void loop() {
