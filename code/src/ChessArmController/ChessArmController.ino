@@ -5,8 +5,8 @@
 #define L1 8
 #define L2 7.6
 #define L3 18.5//10.5 without gripper
-#define Y 5
-#define phi 0
+#define Y 10
+#define phi 45
 //End Measured values
 
 //Globals
@@ -69,36 +69,58 @@ public:
         thetas[2] = phi - (thetas[0] + thetas[1]);
         */
         //Model 2
-        C2=(x*x+y*y-L1*L1-L2*L2+L3*L3-2*L3*(x*cos(deg2rad(phi))+y*sin(deg2rad(phi))))/(2*L1*L2);
-        if((C2!=-1 || L1!=L2) && (C2>=-1 && C2<=1) ){
+        double phi_rad=deg2rad(phi);
+        C2=(x*x+y*y-L1*L1-L2*L2+L3*L3-2*L3*(x*cos(phi_rad)+y*sin(phi_rad)))/(2*L1*L2);
+        Serial.print("C2 is ");
+        Serial.println(C2);
+        if((C2>=-1 && C2<=1) ){
+          if((C2!=-1 || L1!=L2)){
           S2=sqrt(1-C2*C2);
+          Serial.print("S2 is ");
+          Serial.println(S2);
           thetas[1]=rad2deg(atan2(S2,C2));
           thetas[0]=rad2deg(atan2(
-                    (y - L3*sin(deg2rad(phi))) * (L1 + L2*C2)
-                  - (x - L3*cos(deg2rad(phi))) * L2*S2,
+                    (y - L3*sin(phi_rad)) * (L1 + L2*C2)
+                  - (x - L3*cos(phi_rad)) * L2*S2,
 
-                    (x - L3*cos(deg2rad(phi))) * (L1 + L2*C2)
-                  + (y - L3*sin(deg2rad(phi))) * L2*S2
+                    (x - L3*cos(phi_rad)) * (L1 + L2*C2)
+                  + (y - L3*sin(phi_rad)) * L2*S2
                   ));
-          thetas[2]=phi-(thetas[0]+thetas[1]);
+          thetas[2]=rad2deg(phi_rad)-(thetas[0]+thetas[1]);
           Serial.println("Theoritical thetas:");
           PrintThetas();
 
-        //Converting theta's from theoretical model
-        thetas[0]=thetas[0]+38;//Servos B1,B2
-        thetas[1]=thetas[1]+72;//Servo C
-        thetas[2]=76-thetas[2]-180;// Servo D
-        Serial.println("Real thetas:");
-        PrintThetas();
+          //Converting theta's from theoretical model
+          thetas[0]=thetas[0]+abs(thetas[0]-38);//Servos B1,B2
+          thetas[1]=thetas[1]+abs(thetas[1]-72);//Servo C
+          thetas[2]=thetas[2]+abs(thetas[2]-76);// Servo D
+          Serial.println("Real thetas:");
+          PrintThetas();
+
+          }else{
+            Serial.print("Arm out of bounds!!!");
+            //Home position for not breaking the arm
+            thetas[0]=38;//Servos B1,B2
+            thetas[1]=72;//Servo C
+            thetas[2]=76;// Servo D
+          }
 
         }else{
-          Serial.print("Arm out of bounds!!!");
-          //Home position for not breaking the arm
-          thetas[0]=38;//Servos B1,B2
-          thetas[1]=72;//Servo C
-          thetas[2]=76;// Servo D
-        }
+          Serial.println("Cosine is out of bounds!!!");
+      }
         
+        
+    }
+
+    double ConvertAngle(double theta,double offset){
+      if(theta>=0){
+        return theta + offset;
+      }else if (theta<0){
+        return offset - theta;
+      }else{
+        Serial.print(theta);
+        Serial.println("cannot be converted!");
+      }
     }
 
     double GetOmega(double x, double z){
@@ -204,10 +226,10 @@ void setup() {
   RestArm();
   SerialCom();
   InvKin invkin;
-  invkin.FindThetas(15,15);
+  invkin.FindThetas(20,Y);//x=1..26,Y=5 are valid
   SetPosition(invkin);
-  delay(2000);
-  RestArm();
+  /*delay(2000);
+  RestArm();*/
   
 }
 
