@@ -4,9 +4,8 @@
 // Measured values
 #define L1 6.824
 #define L2 6.701
-#define L3 18.7
-#define Y 0
-#define TOLERANCE 0.5
+#define L3 10.7
+#define Y 5
 // End measured values
 
 String move = "";
@@ -41,30 +40,24 @@ public:
   }
 
   double FindBestPhi(double x, double y) {
-    const double PHI_MIN = -90.0;
+    const double PHI_MIN = 10.0;
     const double PHI_MAX = 90.0;
     const double STEP = 1;
 
     double result[3];
 
-    for (double candidatePhi = PHI_MIN; candidatePhi <= PHI_MAX; candidatePhi += STEP) {
-      /*Serial.print("Current phi: ");
-      Serial.println(candidatePhi);*/
+    for (double candidatePhi = PHI_MAX; candidatePhi >= PHI_MIN; candidatePhi -= STEP) {
 
       if (CalculateThetasWithPhiTemp(x, y, candidatePhi, result)) {
 
         if (
           result[0] >= 0 && result[0] <= 180 &&
           result[1] >= 0 && result[1] <= 180 &&
-          result[2] >= 0 && result[2] <= 180 
+          result[2] >= 0 && result[2] <= 180
         ) {
           thetas[0] = result[0];
           thetas[1] = result[1];
           thetas[2] = result[2];
-           Serial.print("x: ");
-           Serial.println(x);
-           Serial.print("y: ");
-           Serial.println(y);
 
           Serial.print("Best phi = ");
           Serial.println(candidatePhi);
@@ -101,7 +94,7 @@ public:
 
     C2 = constrain(C2, -1.0, 1.0);
 
-    double S2 = -sqrt(1 - C2 * C2);
+    double S2 = sqrt(1 - C2 * C2);
 
     double theta2 = rad2deg(atan2(S2, C2));
 
@@ -114,63 +107,23 @@ public:
     ));
 
     double theta3 = candidatePhi - (theta1 + theta2);
-    double raw[3] = {theta1, theta2, theta3};
-    if (!ForwardKinematicsCheck(x, y, raw)) {
-      return false;
-    }
-    Serial.println("Theoretical angles:");
-    Serial.print("theta1 = ");
-    Serial.println(theta1);
 
-    Serial.print("theta2 = ");
-    Serial.println(theta2);
-
-    Serial.print("theta3 = ");
-    Serial.println(theta3);
-
-    result[0] = ConvertAngle(theta1, 180);
+    result[0] = ConvertAngle(theta1, 86-90);
     result[1] = ConvertAngle(theta2, 88);
     result[2] = ConvertAngle(theta3, 94);
-    /*result[0]=180-theta1;
-    result[1]=88-theta2;
-    result[2]=90-theta3;*/
-
-    Serial.println("Servo angles:");
-    Serial.print("B1/B2 = ");
-    Serial.println(result[0]);
-
-    Serial.print("C = ");
-    Serial.println(result[1]);
-
-    Serial.print("D = ");
-    Serial.println(result[2]);
 
     return true;
   }
 
-  bool ForwardKinematicsCheck(double xr, double yr,double result[3]){
-    double x,y,res[3];
-
-    for(int i=0;i<3;i++){
-      res[i]=deg2rad(result[i]);
-    }
-
-    x=L1*cos(res[0])+L2*cos(res[0]+res[1])+L3*cos(res[0]+res[1]+res[2]);
-    y=L1*sin(res[0])+L2*sin(res[0]+res[1])+L3*sin(res[0]+res[1]+res[2]);
-    
-
-
-    if(abs(xr-x)<=TOLERANCE && abs(yr-y)<=TOLERANCE){
-      return true;
-    }else{
-      return false;
-    } 
-
-  }
-  
-
   double ConvertAngle(double theta, double offset) {
-    return offset-theta ;
+   /* if (theta >= 0) {
+      return theta + offset;
+    } else if(theta < 0) {
+      return offset - theta;
+    }else{
+      Serial.println("Invalid angle for converting!");
+    }*/
+    return theta+offset;
   }
 
   double rad2deg(double rad) {
@@ -265,7 +218,7 @@ void setup() {
     }
   }*/
 
-  double bestPhi = invkin.FindBestPhi(15, Y);//x=15...x=32
+  double bestPhi = invkin.FindBestPhi(10, 5);
 
     if (bestPhi != -1) {
       SetPosition(invkin);

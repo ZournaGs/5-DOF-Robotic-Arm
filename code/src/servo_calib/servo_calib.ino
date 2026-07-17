@@ -32,14 +32,14 @@ void SetAngleSup(Servo &servo,double theta,ServoName name) {
 void HomeArm (){
   //servoA.write(90);
   SetAngle(servoA,90,SERVO_A);
-  //servoB1.write(38);
-  SetAngle(servoB1,38,SERVO_B1);
-  //servoB2.write(180-38);
-  SetAngleSup(servoB2,38,SERVO_B2);
+  //servoB1.write(90);
+  SetAngle(servoB1,86,SERVO_B1);
+  //servoB2.write(180-90);
+  SetAngleSup(servoB2,86,SERVO_B2);
   //servoC.write(72);
-  SetAngle(servoC,72,SERVO_C);
+  SetAngle(servoC,88,SERVO_C);
   //servoD.write(76);
-  SetAngle(servoD,76,SERVO_D);
+  SetAngle(servoD,94,SERVO_D);
   //servoF.write(60);//open
   SetAngle(servoF,0,SERVO_F);
   //servoF.write(0);//close
@@ -63,8 +63,20 @@ void setup() {
   servoC.attach(6);
   servoD.attach(7);
   servoF.attach(9);
-  RestArm();
-  SetAngle(servoD,180,SERVO_D);
+  //servoA.write(90);
+  SetAngle(servoA,0,SERVO_A);
+  //servoB1.write(90);
+  SetAngle(servoB1,180,SERVO_B1);
+  //servoB2.write(180-90);
+  SetAngleSup(servoB2,180,SERVO_B2);
+  //servoC.write(72);
+  SetAngle(servoC,90,SERVO_C);
+  //servoD.write(76);
+  SetAngle(servoD,90,SERVO_D);
+  //servoF.write(60);//open
+  SetAngle(servoF,0,SERVO_F);
+  //servoF.write(0);//close
+ 
 
 }
 
