@@ -5,7 +5,7 @@
 #define L1 6.824
 #define L2 6.701
 #define L3 18.7
-#define Y 0
+#define Y -2
 #define TOLERANCE 0.5
 // End measured values
 
@@ -24,7 +24,7 @@ enum ServoName {
 
 class InvKin {
 private:
-  double thetas[3];
+  double thetas[3],omega;
 
 public:
 
@@ -38,6 +38,10 @@ public:
 
   double GetTheta3() {
     return thetas[2];
+  }
+
+  double GetOmega(){
+    return omega;
   }
 
   double FindBestPhi(double x, double y) {
@@ -167,10 +171,23 @@ public:
     } 
 
   }
+  double FindOmega(double z , double x){
+    omega=rad2deg(atan2(z,x));
+    omega=ConvertAngle(omega,90);
+    if(omega>=0 && omega<=180){
+      Serial.print("Omega is: ");
+      Serial.println(omega);
+      return omega;
+    }else{
+      Serial.print("Invalid omega equal to ");
+      Serial.println(omega);
+      return -1;
+    }
+  }
   
 
-  double ConvertAngle(double theta, double offset) {
-    return offset-theta ;
+  double ConvertAngle(double angle, double offset) {
+    return offset-angle ;
   }
 
   double rad2deg(double rad) {
@@ -195,7 +212,7 @@ void SetAngle(Servo &servo, double theta, ServoName name) {
     servo.write(theta);
 
     if (!(name == SERVO_B1 || name == SERVO_B2)) {
-      delay(100);
+      delay(500);
     }
   } else {
     Serial.print("Servo ");
@@ -229,10 +246,25 @@ void GripClose() {
 }
 
 void SetPosition(InvKin &invkin) {
+  SetAngle(servoA, invkin.GetOmega(), SERVO_A);
   SetAngle(servoB1, invkin.GetTheta1(), SERVO_B1);
   SetAngleSup(servoB2, invkin.GetTheta1(), SERVO_B2);
   SetAngle(servoC, invkin.GetTheta2(), SERVO_C);
   SetAngle(servoD, invkin.GetTheta3(), SERVO_D);
+}
+
+void GoTo(InvKin &invkin, double x , double z){
+
+  double bestPhi = invkin.FindBestPhi(x, Y);//x=15...x=32,y=0->x=14...32,y=-3
+  double omega = invkin.FindOmega(z, x);//z=9.1875...z=-12.25
+
+    if (bestPhi != -1 && omega!= -1) {
+      SetPosition(invkin);
+      delay(1000);
+    } else {
+      Serial.println("Skipping movement for this position.");
+    }
+
 }
 
 void setup() {
@@ -246,34 +278,10 @@ void setup() {
   servoF.attach(9);
 
   RestArm();
-  delay(2000);
+  delay(1500);
 
   InvKin invkin;
-  //Simulation
-  /*
-  for (double x = 9; x <= 33; x++) {
-    Serial.print("x=");
-    Serial.println(x);
-
-    double bestPhi = invkin.FindBestPhi(x, Y);
-
-    if (bestPhi != -1) {
-      SetPosition(invkin);
-      delay(1000);
-    } else {
-      Serial.println("Skipping movement for this x.");
-    }
-  }*/
-
-  double bestPhi = invkin.FindBestPhi(15, Y);//x=15...x=32
-
-    if (bestPhi != -1) {
-      SetPosition(invkin);
-      delay(1000);
-    } else {
-      Serial.println("Skipping movement for this x.");
-    }
-
+  GoTo(invkin,15,10);//x=15..32 when y=-1
 
 }
 
