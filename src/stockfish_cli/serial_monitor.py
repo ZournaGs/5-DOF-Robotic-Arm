@@ -4,7 +4,7 @@ import os
 
 SERIAL_PORT = "/dev/ttyUSB0"
 BAUD_RATE = 9600
-FILE_PATH = "code/src/stockfish_cli/answer.txt"
+FILE_PATH = "src/stockfish_cli/answer.txt"
 
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0.1)
 time.sleep(2)

@@ -1,7 +1,8 @@
 import subprocess
 import chess
 
-
+#TO DO
+# ADD USER MOVE INPUT CHECK BEFORE SENDING IT TO STOCKFISH
 stockfish_path = "/usr/local/bin/stockfish"
 
 engine = subprocess.Popen(
@@ -32,7 +33,7 @@ def get_bestmove_from_current_position():
     return bestmove_line.split()[1]
 
 def clear_answer():
-    with open("code/src/stockfish_cli/answer.txt","w") as f:
+    with open("src/stockfish_cli/answer.txt","w") as f:
          f.write("")
 
 send("uci")
@@ -63,7 +64,7 @@ try:
     print("Stockfish answer:", stockfish_move)
 
     board.push(chess.Move.from_uci(stockfish_move))
-    with open("code/src/stockfish_cli/answer.txt","w") as f:
+    with open("src/stockfish_cli/answer.txt","w") as f:
         f.write(stockfish_move)
 
 except KeyboardInterrupt:

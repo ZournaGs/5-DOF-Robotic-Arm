@@ -10,9 +10,8 @@
 //End Measured values
 
 //Globals
-String move = "";
+String move = "";//Strockfish answer
 Servo servoA,servoB1,servoB2,servoC,servoD,servoF;
-//End Globals
 
 enum ServoName {
     SERVO_A,
@@ -22,7 +21,9 @@ enum ServoName {
     SERVO_D,
     SERVO_F
 };
+//End Globals
 
+//InvKin start
 class InvKin {
 private:
     double thetas[3],omega;
@@ -207,9 +208,14 @@ void SerialCom(){
     move = Serial.readStringUntil('\n');
     Serial.print("Arduino received: ");
     Serial.println(move);
+    DecodeMove(move);
     }else{
       Serial.println("Serial communication is unavailable!");
     }
+}
+
+bool DecodeMove(String mv){
+  bool go=false;
 }
 //End functions
 

@@ -1,5 +1,6 @@
 #include <Servo.h>
 #include <math.h>
+#include <avr/pgmspace.h>
 
 // Measured values
 #define L1 6.824
@@ -9,7 +10,25 @@
 #define TOLERANCE 0.5
 // End measured values
 
+//Stockfish move as a global
 String move = "";
+
+//Structs for decoding moves to coordinates
+struct Point {
+  double xc;//x of chessboard
+  double yc;//y of chessboard
+}p_in,p_fin;
+
+struct Square{
+  int col;
+  int row;
+}sq_in,sq_fin;
+
+//Lookup table for the chessboard
+const double Chessboard[8][8] PROGMEM{
+
+};
+
 
 Servo servoA, servoB1, servoB2, servoC, servoD, servoF;
 
@@ -205,6 +224,8 @@ public:
   }
 };
 
+
+
 // Functions
 
 void SetAngle(Servo &servo, double theta, ServoName name) {
@@ -267,26 +288,53 @@ void GoTo(InvKin &invkin, double x , double z){
 
 }
 
-void setup() {
-  Serial.begin(9600);
+void SerialCom(){
+  if (Serial.available()) {
+    move = Serial.readStringUntil('\n');
+    Serial.print("Arduino received: ");
+    Serial.println(move);
+    DecodeMove(move); 
+  }
+}
 
+void DecodeMove(String mv){
+  //Splitting into columns and rows and then directly indexing for the lookup table
+  sq_in.col=mv[0]-'a';//col_a=0,...,col_h=7
+  sq_in.row=mv[1]-'1';//row_1=0,...,row_8=7
+  sq_fin.col=mv[2]-'a';
+  sq_fin.row=mv[4]-'1';
+  //Translating from the lookup table
+  //p_in.xc=chessboard[][];
+}
+
+
+
+void setup() {
+  //Serial Communication start
+  Serial.begin(9600);
+  
+  //Servo setup
   servoA.attach(3);
   servoB1.attach(4);
   servoB2.attach(5);
   servoC.attach(6);
   servoD.attach(7);
   servoF.attach(9);
-
+  
+  //Initiate starting position
   RestArm();
   delay(1500);
 
-  InvKin invkin;
+  //Inverse Kinematics test
+  /*InvKin invkin;
   GoTo(invkin,15,10);//x=15..32 when y=-1
+  */
 
 }
 
 
 
 void loop() {
+  SerialCom();
 
 }
