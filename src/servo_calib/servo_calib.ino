@@ -41,11 +41,15 @@ void HomeArm (){
   //servoD.write(76);
   SetAngle(servoD,94,SERVO_D);
   //servoF.write(60);//open
-  SetAngle(servoF,0,SERVO_F);
+  SetAngle(servoF,50,SERVO_F);
   //servoF.write(0);//close
 }
 void RestArm(){
   HomeArm();
+  SetAngle(servoB1,86-30,SERVO_B1);
+  //servoB2.write(180-90);
+  SetAngleSup(servoB2,86-30,SERVO_B2);
+  SetAngle(servoC,88+60,SERVO_C);
   SetAngle(servoD,76+60,SERVO_D);
 
 }
@@ -62,8 +66,8 @@ void setup() {
   servoB2.attach(5);
   servoC.attach(6);
   servoD.attach(7);
-  servoF.attach(9);
-  //servoA.write(90);
+  servoF.attach(8);
+  /*//servoA.write(90);
   SetAngle(servoA,0,SERVO_A);
   //servoB1.write(90);
   SetAngle(servoB1,180,SERVO_B1);
@@ -73,9 +77,11 @@ void setup() {
   SetAngle(servoC,90,SERVO_C);
   //servoD.write(76);
   SetAngle(servoD,90,SERVO_D);
-  //servoF.write(60);//open
-  SetAngle(servoF,0,SERVO_F);
+  servoF.write(90);//open
+  //SetAngle(servoF,0,SERVO_F);
   //servoF.write(0);//close
+  */
+  RestArm();
  
 
 }

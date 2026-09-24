@@ -24,9 +24,71 @@ struct Square{
   int row;
 }sq_in,sq_fin;
 
-//Lookup table for the chessboard
-const double Chessboard[8][8] PROGMEM{
+//Lookup table for the chessboard as Black
+const Point Chessboard[8][8] PROGMEM = {
+  // a1 - h1
+  {
+    {-12.2500, 22.96875}, {-9.1875, 22.96875},
+    {-6.1250,  22.96875}, {-3.0625, 22.96875},
+    { 0.0000,  22.96875}, { 3.0625, 22.96875},
+    { 6.1250,  22.96875}, { 9.1875, 22.96875}
+  },
 
+  // a2 - h2
+  {
+    {-12.2500, 19.90625}, {-9.1875, 19.90625},
+    {-6.1250,  19.90625}, {-3.0625, 19.90625},
+    { 0.0000,  19.90625}, { 3.0625, 19.90625},
+    { 6.1250,  19.90625}, { 9.1875, 19.90625}
+  },
+
+  // a3 - h3
+  {
+    {-12.2500, 16.84375}, {-9.1875, 16.84375},
+    {-6.1250,  16.84375}, {-3.0625, 16.84375},
+    { 0.0000,  16.84375}, { 3.0625, 16.84375},
+    { 6.1250,  16.84375}, { 9.1875, 16.84375}
+  },
+
+  // a4 - h4
+  {
+    {-12.2500, 13.78125}, {-9.1875, 13.78125},
+    {-6.1250,  13.78125}, {-3.0625, 13.78125},
+    { 0.0000,  13.78125}, { 3.0625, 13.78125},
+    { 6.1250,  13.78125}, { 9.1875, 13.78125}
+  },
+
+  // a5 - h5
+  {
+    {-12.2500, 10.71875}, {-9.1875, 10.71875},
+    {-6.1250,  10.71875}, {-3.0625, 10.71875},
+    { 0.0000,  10.71875}, { 3.0625, 10.71875},
+    { 6.1250,  10.71875}, { 9.1875, 10.71875}
+  },
+
+  // a6 - h6
+  {
+    {-12.2500, 7.65625}, {-9.1875, 7.65625},
+    {-6.1250,  7.65625}, {-3.0625, 7.65625},
+    { 0.0000,  7.65625}, { 3.0625, 7.65625},
+    { 6.1250,  7.65625}, { 9.1875, 7.65625}
+  },
+
+  // a7 - h7
+  {
+    {-12.2500, 4.59375}, {-9.1875, 4.59375},
+    {-6.1250,  4.59375}, {-3.0625, 4.59375},
+    { 0.0000,  4.59375}, { 3.0625, 4.59375},
+    { 6.1250,  4.59375}, { 9.1875, 4.59375}
+  },
+
+  // a8 - h8
+  {
+    {-12.2500, 1.53125}, {-9.1875, 1.53125},
+    {-6.1250,  1.53125}, {-3.0625, 1.53125},
+    { 0.0000,  1.53125}, { 3.0625, 1.53125},
+    { 6.1250,  1.53125}, { 9.1875, 1.53125}
+  }
 };
 
 
@@ -65,7 +127,7 @@ public:
 
   double FindBestPhi(double x, double y) {
     const double PHI_MIN = -90.0;
-    const double PHI_MAX = 90.0;
+    const double PHI_MAX = -10.0;
     const double STEP = 1;
 
     double result[3];
@@ -288,23 +350,62 @@ void GoTo(InvKin &invkin, double x , double z){
 
 }
 
-void SerialCom(){
+bool SerialCom(){
   if (Serial.available()) {
     move = Serial.readStringUntil('\n');
     Serial.print("Arduino received: ");
     Serial.println(move);
-    DecodeMove(move); 
+    DecodeMove(move);
+    return true; 
   }
+  return false;
 }
 
-void DecodeMove(String mv){
+void DecodeMove(const String &mv){
   //Splitting into columns and rows and then directly indexing for the lookup table
   sq_in.col=mv[0]-'a';//col_a=0,...,col_h=7
   sq_in.row=mv[1]-'1';//row_1=0,...,row_8=7
   sq_fin.col=mv[2]-'a';
-  sq_fin.row=mv[4]-'1';
+  sq_fin.row=mv[3]-'1';
   //Translating from the lookup table
-  //p_in.xc=chessboard[][];
+  p_in=ReadPoint(sq_in);
+  p_fin=ReadPoint(sq_fin);
+  //Debug
+  /*Serial.print("Point1:");
+  Serial.println(p_in.xc);
+  Serial.print(p_in.yc);
+  Serial.print("Point2:");
+  Serial.println(p_fin.xc);
+  Serial.print(p_fin.yc);*/
+}
+
+Point ReadPoint(const Square &square) {
+  Point point;
+
+  memcpy_P(
+    &point,
+    &Chessboard[square.row][square.col],
+    sizeof(Point)
+  );
+
+  return point;
+}
+
+void ExecuteMove(const Point &point1, const Point &point2){
+  InvKin invkin;
+  // Always start with open hand
+  GripOpen();
+  delay(100);
+  //Go to first point and grab
+  GoTo(invkin,point1.yc,point1.xc);//xc->z,yc->x
+  GripClose();
+  delay(100);
+  //Go to second point and release
+  GoTo(invkin,point2.yc,point2.xc);
+  GripOpen();
+  delay(100);
+  //Return
+  RestArm();
 }
 
 
@@ -323,7 +424,7 @@ void setup() {
   
   //Initiate starting position
   RestArm();
-  delay(1500);
+  delay(500);
 
   //Inverse Kinematics test
   /*InvKin invkin;
@@ -332,9 +433,9 @@ void setup() {
 
 }
 
-
-
 void loop() {
-  SerialCom();
+  if(SerialCom()){
+    ExecuteMove(p_in,p_fin);
+  }
 
 }
