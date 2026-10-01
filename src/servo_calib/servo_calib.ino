@@ -41,7 +41,7 @@ void HomeArm (){
   //servoD.write(76);
   SetAngle(servoD,94,SERVO_D);
   //servoF.write(60);//open
-  SetAngle(servoF,50,SERVO_F);
+  SetAngle(servoF,26,SERVO_F);
   //servoF.write(0);//close
 }
 void RestArm(){

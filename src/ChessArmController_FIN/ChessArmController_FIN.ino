@@ -8,6 +8,7 @@
 #define L3 18.7
 #define Y -2
 #define TOLERANCE 0.5
+#define ARM_D 15 //Real distance between arm and chessboard
 // End measured values
 
 //Stockfish move as a global
@@ -292,7 +293,8 @@ public:
 
 void SetAngle(Servo &servo, double theta, ServoName name) {
   if (theta >= 0 && theta <= 180) {
-    servo.write(theta);
+    MoveJoint(servo,theta);
+    //servo.write(theta);
 
     if (!(name == SERVO_B1 || name == SERVO_B2)) {
       delay(500);
@@ -308,6 +310,16 @@ void SetAngleSup(Servo &servo, double theta, ServoName name) {
   SetAngle(servo, 180 - theta, name);
 }
 
+void MoveJoint(Servo &servo, double theta){
+   int current = servo.read(); // Last angle read
+
+  while (current != theta) {
+    current += (theta > current) ? 1 : -1;
+    servo.write(current);
+    delay(10);
+  }
+}
+
 void RestArm() {
   SetAngle(servoA, 90, SERVO_A);
 
@@ -317,15 +329,15 @@ void RestArm() {
   SetAngle(servoC, 80, SERVO_C);
   SetAngle(servoD, 136, SERVO_D);
 
-  SetAngle(servoF, 0, SERVO_F);
+  //SetAngle(servoF, 0, SERVO_F);
 }
 
 void GripOpen() {
-  SetAngle(servoF, 0, SERVO_F);
+  SetAngle(servoF, 80, SERVO_F);
 }
 
 void GripClose() {
-  SetAngle(servoF, 160, SERVO_F);
+  SetAngle(servoF, 23, SERVO_F);
 }
 
 void SetPosition(InvKin &invkin) {
@@ -395,15 +407,15 @@ void ExecuteMove(const Point &point1, const Point &point2){
   InvKin invkin;
   // Always start with open hand
   GripOpen();
-  delay(100);
+  delay(500);
   //Go to first point and grab
-  GoTo(invkin,point1.yc,point1.xc);//xc->z,yc->x
+  GoTo(invkin,point1.yc+ARM_D,point1.xc);//xc->z,yc->x
   GripClose();
-  delay(100);
+  delay(500);
   //Go to second point and release
-  GoTo(invkin,point2.yc,point2.xc);
+  GoTo(invkin,point2.yc+ARM_D,point2.xc);
   GripOpen();
-  delay(100);
+  delay(500);
   //Return
   RestArm();
 }
@@ -420,11 +432,16 @@ void setup() {
   servoB2.attach(5);
   servoC.attach(6);
   servoD.attach(7);
-  servoF.attach(9);
+  servoF.attach(8);
   
   //Initiate starting position
   RestArm();
   delay(500);
+  GripOpen();
+  delay(500);
+  GripClose();
+
+
 
   //Inverse Kinematics test
   /*InvKin invkin;

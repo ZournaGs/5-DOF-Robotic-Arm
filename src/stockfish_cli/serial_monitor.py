@@ -22,12 +22,12 @@ try:
                 ser.write((move + "\n").encode())
                 last_move = move
 
-        if ser.in_waiting > 0:
+        while ser.in_waiting > 0:
             arduino_msg = ser.readline().decode(errors="ignore").strip()
             if arduino_msg:
                 print(f"Arduino: {arduino_msg}\n---------------\n")
 
-        time.sleep(0.1)
+        time.sleep(0.01)
 
 except KeyboardInterrupt:
     print("Closing serial...")
