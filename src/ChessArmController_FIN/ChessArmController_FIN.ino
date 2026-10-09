@@ -5,10 +5,10 @@
 // Measured values
 #define L1 6.824
 #define L2 6.701
-#define L3 18.7
-#define Y -2
+#define L3 18.6
+#define Y -3
 #define TOLERANCE 0.5
-#define ARM_D 15 //Real distance between arm and chessboard
+#define ARM_D 15 //Real distance between arm's base and chessboard
 // End measured values
 
 //Stockfish move as a global
@@ -293,8 +293,7 @@ public:
 
 void SetAngle(Servo &servo, double theta, ServoName name) {
   if (theta >= 0 && theta <= 180) {
-    MoveJoint(servo,theta);
-    //servo.write(theta);
+    servo.write(theta);
 
     if (!(name == SERVO_B1 || name == SERVO_B2)) {
       delay(500);
@@ -310,15 +309,6 @@ void SetAngleSup(Servo &servo, double theta, ServoName name) {
   SetAngle(servo, 180 - theta, name);
 }
 
-void MoveJoint(Servo &servo, double theta){
-   int current = servo.read(); // Last angle read
-
-  while (current != theta) {
-    current += (theta > current) ? 1 : -1;
-    servo.write(current);
-    delay(10);
-  }
-}
 
 void RestArm() {
   SetAngle(servoA, 90, SERVO_A);
@@ -340,6 +330,10 @@ void GripClose() {
   SetAngle(servoF, 23, SERVO_F);
 }
 
+void Raise(InvKin &invkin){
+  SetAngle(servoD, invkin.GetTheta3()-10, SERVO_D);
+}
+
 void SetPosition(InvKin &invkin) {
   SetAngle(servoA, invkin.GetOmega(), SERVO_A);
   SetAngle(servoB1, invkin.GetTheta1(), SERVO_B1);
@@ -348,9 +342,9 @@ void SetPosition(InvKin &invkin) {
   SetAngle(servoD, invkin.GetTheta3(), SERVO_D);
 }
 
-void GoTo(InvKin &invkin, double x , double z){
+void GoTo(InvKin &invkin, double x , double z, double y){
 
-  double bestPhi = invkin.FindBestPhi(x, Y);//x=15...x=32,y=0->x=14...32,y=-3
+  double bestPhi = invkin.FindBestPhi(x, y);//x=15...x=32,y=0->x=14...32,y=-3
   double omega = invkin.FindOmega(z, x);//z=9.1875...z=-12.25
 
     if (bestPhi != -1 && omega!= -1) {
@@ -409,11 +403,13 @@ void ExecuteMove(const Point &point1, const Point &point2){
   GripOpen();
   delay(500);
   //Go to first point and grab
-  GoTo(invkin,point1.yc+ARM_D,point1.xc);//xc->z,yc->x
+  GoTo(invkin,point1.yc+ARM_D,point1.xc,Y);//xc->z,yc->x
   GripClose();
   delay(500);
+  Raise(invkin);
+  delay(1000);
   //Go to second point and release
-  GoTo(invkin,point2.yc+ARM_D,point2.xc);
+  GoTo(invkin,point2.yc+ARM_D,point2.xc,Y+4);
   GripOpen();
   delay(500);
   //Return
@@ -436,9 +432,10 @@ void setup() {
   
   //Initiate starting position
   RestArm();
-  delay(500);
+
+  delay(100);
   GripOpen();
-  delay(500);
+  delay(100);
   GripClose();
 
 
