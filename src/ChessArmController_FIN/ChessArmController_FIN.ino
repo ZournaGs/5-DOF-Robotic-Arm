@@ -255,7 +255,7 @@ public:
   }
   double FindOmega(double z , double x){
     omega=rad2deg(atan2(z,x));
-    omega=ConvertAngle(omega,90);
+    omega=ConvertAngleRev(omega,90);
     if(omega>=0 && omega<=180){
       Serial.print("Omega is: ");
       Serial.println(omega);
@@ -270,6 +270,10 @@ public:
 
   double ConvertAngle(double angle, double offset) {
     return offset-angle ;
+  }
+
+  double ConvertAngleRev(double angle, double offset){
+    return offset+angle;
   }
 
   double rad2deg(double rad) {
@@ -327,11 +331,11 @@ void GripOpen() {
 }
 
 void GripClose() {
-  SetAngle(servoF, 23, SERVO_F);
+  SetAngle(servoF, 20, SERVO_F);
 }
 
 void Raise(InvKin &invkin){
-  SetAngle(servoD, invkin.GetTheta3()-10, SERVO_D);
+  SetAngle(servoD, invkin.GetTheta3()-30, SERVO_D);
 }
 
 void SetPosition(InvKin &invkin) {
@@ -409,7 +413,7 @@ void ExecuteMove(const Point &point1, const Point &point2){
   Raise(invkin);
   delay(1000);
   //Go to second point and release
-  GoTo(invkin,point2.yc+ARM_D,point2.xc,Y+4);
+  GoTo(invkin,point2.yc+ARM_D,point2.xc,Y+2);
   GripOpen();
   delay(500);
   //Return
