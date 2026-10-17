@@ -5,10 +5,10 @@
 // Measured values
 #define L1 6.824
 #define L2 6.701
-#define L3 18.6
-#define Y -3
+#define L3 18.45
+#define Y -5.1
 #define TOLERANCE 0.5
-#define ARM_D 15 //Real distance between arm's base and chessboard
+#define ARM_D 14.65//Real distance between arm's base and chessboard's starting square
 // End measured values
 
 //Stockfish move as a global
@@ -255,7 +255,7 @@ public:
   }
   double FindOmega(double z , double x){
     omega=rad2deg(atan2(z,x));
-    omega=ConvertAngleRev(omega,90);
+    omega=ConvertAngleRev(omega,93);
     if(omega>=0 && omega<=180){
       Serial.print("Omega is: ");
       Serial.println(omega);
@@ -307,6 +307,7 @@ void SetAngle(Servo &servo, double theta, ServoName name) {
     Serial.print(name);
     Serial.println(" got invalid angle!");
   }
+  delay(50);
 }
 
 void SetAngleSup(Servo &servo, double theta, ServoName name) {
@@ -327,15 +328,42 @@ void RestArm() {
 }
 
 void GripOpen() {
-  SetAngle(servoF, 80, SERVO_F);
+  
+  double currentAngle = servoF.read();
+
+  while (currentAngle != 60) {
+    if (currentAngle < 60) {
+      currentAngle++;
+    } else {
+      currentAngle--;
+    }
+
+    servoF.write(currentAngle);
+    delay(10);
+  }
 }
 
 void GripClose() {
-  SetAngle(servoF, 20, SERVO_F);
+  double currentAngle = servoF.read();
+
+  while (currentAngle != 20) {
+    if (currentAngle < 20) {
+      currentAngle++;
+    } else {
+      currentAngle--;
+    }
+
+    servoF.write(currentAngle);
+    delay(10);
+  }
 }
 
-void Raise(InvKin &invkin){
-  SetAngle(servoD, invkin.GetTheta3()-30, SERVO_D);
+void Raise(){
+  SetAngle(servoB1,86-30,SERVO_B1);
+  //servoB2.write(180-90);
+  SetAngleSup(servoB2,86-30,SERVO_B2);
+  SetAngle(servoC,88+60,SERVO_C);
+  SetAngle(servoD,76+60,SERVO_D);
 }
 
 void SetPosition(InvKin &invkin) {
@@ -389,6 +417,11 @@ void DecodeMove(const String &mv){
   Serial.print(p_fin.yc);*/
 }
 
+ double FindHypotenuse(double z){
+   //Calculate the distance between the arm's base and z coordinate 
+   return sqrt(ARM_D*ARM_D+z*z);
+ }
+
 Point ReadPoint(const Square &square) {
   Point point;
 
@@ -407,17 +440,21 @@ void ExecuteMove(const Point &point1, const Point &point2){
   GripOpen();
   delay(500);
   //Go to first point and grab
-  GoTo(invkin,point1.yc+ARM_D,point1.xc,Y);//xc->z,yc->x
+  GoTo(invkin,point1.yc+FindHypotenuse(point1.xc),point1.xc,Y);//xc->z,yc->x
   GripClose();
   delay(500);
-  Raise(invkin);
+  Raise();
   delay(1000);
   //Go to second point and release
-  GoTo(invkin,point2.yc+ARM_D,point2.xc,Y+2);
+  //Drop it nicely
+  GoTo(invkin,point2.yc+FindHypotenuse(point2.xc),point2.xc,Y+6);
+  GoTo(invkin,point2.yc+FindHypotenuse(point2.xc),point2.xc,Y+2);
   GripOpen();
   delay(500);
   //Return
+  Raise();
   RestArm();
+  Serial.println("Enter next move: ");
 }
 
 

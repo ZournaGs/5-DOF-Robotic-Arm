@@ -29,6 +29,14 @@ void SetAngleSup(Servo &servo,double theta,ServoName name) {
       SetAngle(servo,180-theta,name);
     }
 
+    void GripOpen() {
+  SetAngle(servoF, 80, SERVO_F);
+}
+
+void GripClose() {
+  SetAngle(servoF, 25, SERVO_F);
+}
+
 void HomeArm (){
   //servoA.write(90);
   SetAngle(servoA,90,SERVO_A);
@@ -41,7 +49,7 @@ void HomeArm (){
   //servoD.write(76);
   SetAngle(servoD,94,SERVO_D);
   //servoF.write(60);//open
-  SetAngle(servoF,26,SERVO_F);
+  //SetAngle(servoF,26,SERVO_F);
   //servoF.write(0);//close
 }
 void RestArm(){
@@ -82,6 +90,8 @@ void setup() {
   //servoF.write(0);//close
   */
   RestArm();
+  GripOpen();
+  GripClose();
  
 
 }
