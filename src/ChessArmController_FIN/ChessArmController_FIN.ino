@@ -8,7 +8,7 @@
 #define L3 18.45
 #define Y -5.1
 #define TOLERANCE 0.5
-#define ARM_D 14.65//Real distance between arm's base and chessboard's starting square
+#define ARM_D 14.67//Real distance between arm's base and chessboard's starting square
 // End measured values
 
 //Stockfish move as a global
@@ -148,8 +148,8 @@ public:
           thetas[1] = result[1];
           thetas[2] = result[2];
            Serial.print("x: ");
-           Serial.println(x);
-           Serial.print("y: ");
+           Serial.print(x);
+           Serial.print(", y: ");
            Serial.println(y);
 
           Serial.print("Best phi = ");
@@ -204,7 +204,8 @@ public:
     if (!ForwardKinematicsCheck(x, y, raw)) {
       return false;
     }
-    Serial.println("Theoretical angles:");
+    //DEBUG
+    /*Serial.println("Theoretical angles:");
     Serial.print("theta1 = ");
     Serial.println(theta1);
 
@@ -212,7 +213,7 @@ public:
     Serial.println(theta2);
 
     Serial.print("theta3 = ");
-    Serial.println(theta3);
+    Serial.println(theta3);*/
 
     result[0] = ConvertAngle(theta1, 180);
     result[1] = ConvertAngle(theta2, 88);
@@ -221,7 +222,8 @@ public:
     result[1]=88-theta2;
     result[2]=90-theta3;*/
 
-    Serial.println("Servo angles:");
+    //DEBUG
+    /*Serial.println("Servo angles:");
     Serial.print("B1/B2 = ");
     Serial.println(result[0]);
 
@@ -229,7 +231,7 @@ public:
     Serial.println(result[1]);
 
     Serial.print("D = ");
-    Serial.println(result[2]);
+    Serial.println(result[2]);*/
 
     return true;
   }
@@ -255,14 +257,16 @@ public:
   }
   double FindOmega(double z , double x){
     omega=rad2deg(atan2(z,x));
-    omega=ConvertAngleRev(omega,93);
+    omega=ConvertAngleRev(omega,91.7);
     if(omega>=0 && omega<=180){
-      Serial.print("Omega is: ");
-      Serial.println(omega);
+      //DEBUG
+      /*Serial.print("Omega is: ");
+      Serial.println(omega);*/
       return omega;
     }else{
-      Serial.print("Invalid omega equal to ");
-      Serial.println(omega);
+      //DEBUG
+      /*Serial.print("Invalid omega equal to ");
+      Serial.println(omega);*/
       return -1;
     }
   }
@@ -286,7 +290,11 @@ public:
 
   void PrintThetas() {
     for (int i = 0; i < 3; i++) {
-      Serial.println(thetas[i]);
+      Serial.print(thetas[i]);
+      if(i<2){
+        Serial.print(", ");
+      }
+      
     }
   }
 };
@@ -346,8 +354,8 @@ void GripOpen() {
 void GripClose() {
   double currentAngle = servoF.read();
 
-  while (currentAngle != 20) {
-    if (currentAngle < 20) {
+  while (currentAngle != 10) {
+    if (currentAngle < 10) {
       currentAngle++;
     } else {
       currentAngle--;
@@ -358,12 +366,13 @@ void GripClose() {
   }
 }
 
-void Raise(){
+bool Raise(){
   SetAngle(servoB1,86-30,SERVO_B1);
   //servoB2.write(180-90);
   SetAngleSup(servoB2,86-30,SERVO_B2);
   SetAngle(servoC,88+60,SERVO_C);
   SetAngle(servoD,76+60,SERVO_D);
+  return true;
 }
 
 void SetPosition(InvKin &invkin) {
@@ -443,12 +452,12 @@ void ExecuteMove(const Point &point1, const Point &point2){
   GoTo(invkin,point1.yc+FindHypotenuse(point1.xc),point1.xc,Y);//xc->z,yc->x
   GripClose();
   delay(500);
-  Raise();
-  delay(1000);
-  //Go to second point and release
+  if(Raise()){
+    //Go to second point and release
   //Drop it nicely
   GoTo(invkin,point2.yc+FindHypotenuse(point2.xc),point2.xc,Y+6);
   GoTo(invkin,point2.yc+FindHypotenuse(point2.xc),point2.xc,Y+2);
+  }
   GripOpen();
   delay(500);
   //Return
